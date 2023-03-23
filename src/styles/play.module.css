@@ -1,0 +1,16 @@
+.main {
+  background-color: white;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main > div {
+  width: 100vh;
+  height: 100vh;
+  background-color: black;
+  position: relative;
+  overflow: hidden;
+}
