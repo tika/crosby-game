@@ -9,9 +9,9 @@ export default function Play() {
   const [playerPos, setPlayerPos] = useState([0, 0]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
   const gravity = 0.0;
-  const acceleration = 2;
-  const gap = acceleration + 0.1;
-  const refreshRate = 10;
+  const acceleration = 0.5;
+  const gap = 0;
+  const refreshRate = 2.5;
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
@@ -19,9 +19,6 @@ export default function Play() {
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
   );
-
-  // []
-  // [[false, false, false, false], [false, false, false, false], [false, false, false, false]]
 
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
@@ -53,34 +50,22 @@ export default function Play() {
 
   // assumes current position is valid
   // returns { [validX, validY],
-  function getValidPlacement([x, y]: [number, number]): {
-    coords: [number, number];
-    collision: Collision;
-  } {
-    if (!playerRef.current || !platform2Ref.current)
-      return { coords: [x, y], collision: [0, 0] };
+  function getValidPlacement([x, y]: [number, number]): boolean {
+    if (!playerRef.current || !platform2Ref.current || !platform1Ref.current)
+      return false;
 
     const playerBox = playerRef.current.getBoundingClientRect();
     const platformBoxes = [
-      // platform1Ref.current.getBoundingClientRect(),§
+      platform1Ref.current.getBoundingClientRect(),
       platform2Ref.current.getBoundingClientRect(),
     ];
 
     const [top, right, bottom, left] = [
-      playerBox.y,
-      playerBox.x + playerBox.width,
-      playerBox.y + playerBox.height,
-      playerBox.x,
+      y,
+      x + playerBox.width,
+      y + playerBox.height,
+      x,
     ];
-
-    let finalCoords = {
-      coords: [x, y] as [number, number],
-      collision: [0, 0] as Collision,
-    };
-
-    let returnVals = [x, y];
-    // [1 or 0 or -1 (+ve collison or -ve collision or no collision), 1 or 0 or -1]
-    let returnCollision: Collision = [0, 0];
 
     for (let i = 0; i < platformBoxes.length; i++) {
       const currentPlatformBox = platformBoxes[i];
@@ -103,55 +88,34 @@ export default function Play() {
       if (conditions[0] && conditions[2]) {
         if (tempPreviousConditions[2]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [1, returnCollision[1]];
-          returnVals = [
-            currentPlatformBox.left - playerBox.width - gap,
-            returnVals[1],
-          ];
+          return false;
         } else {
           tempPreviousConditions[2] = false;
-          returnCollision = [returnCollision[0], -1];
-          returnVals = [returnVals[0], currentPlatformBox.bottom + gap];
+          return false;
         }
       } else if (conditions[0] && conditions[3]) {
         if (tempPreviousConditions[3]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [1, returnCollision[1]];
-          returnVals = [
-            currentPlatformBox.left - playerBox.width - gap,
-            returnVals[1],
-          ];
+          return false;
         } else {
-          // console.log("2");
           tempPreviousConditions[3] = false;
-          returnCollision = [returnCollision[0], 1];
-          returnVals = [
-            returnVals[0],
-            currentPlatformBox.top - playerBox.height - gap,
-          ];
+          return false;
         }
       } else if (conditions[1] && conditions[2]) {
         if (tempPreviousConditions[2]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [-1, returnCollision[1]];
-          returnVals = [currentPlatformBox.right + gap, returnVals[1]];
+          return false;
         } else {
           tempPreviousConditions[2] = false;
-          returnCollision = [returnCollision[0], -1];
-          returnVals = [returnVals[0], currentPlatformBox.bottom + gap];
+          return false;
         }
       } else if (conditions[1] && conditions[3]) {
         if (tempPreviousConditions[3]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [-1, returnCollision[1]];
-          returnVals = [currentPlatformBox.right + gap, returnVals[1]];
+          return false;
         } else {
           tempPreviousConditions[3] = false;
-          returnCollision = [returnCollision[0], 1];
-          returnVals = [
-            returnVals[0],
-            currentPlatformBox.top - playerBox.height - gap,
-          ];
+          return false;
         }
       }
       tempPreviousConditions = conditions as Conditions;
@@ -166,36 +130,26 @@ export default function Play() {
 
       setPreviousConditions(a);
     }
-    finalCoords = {
-      coords: returnVals as [number, number],
-      collision: returnCollision,
-    };
 
-    return finalCoords;
+    return true;
   }
 
   // gameloop
   useEffect(() => {
     const gameloop = setInterval(() => {
-      const placement = getValidPlacement(playerPos as [number, number]);
+      let newPlayerSpeed = [playerSpeed[0], playerSpeed[1]];
 
-      console.log(placement.collision);
+      const newPosition = [
+        playerPos[0] + newPlayerSpeed[0],
+        playerPos[1] + newPlayerSpeed[1],
+      ];
 
-      let newPlayerSpeed = [playerSpeed[0], playerSpeed[1] + gravity];
+      const placement = getValidPlacement(newPosition as [number, number]);
 
-      if (placement.collision[0] !== 0) {
-        newPlayerSpeed = [0, newPlayerSpeed[1]];
+      if (placement) {
+        setPlayerPos(newPosition);
+        setPlayerSpeed(newPlayerSpeed);
       }
-
-      if (placement.collision[1] !== 0) {
-        newPlayerSpeed = [newPlayerSpeed[0], 0];
-      }
-
-      setPlayerPos([
-        placement.coords[0] + newPlayerSpeed[0],
-        placement.coords[1] + newPlayerSpeed[1],
-      ]);
-      setPlayerSpeed(newPlayerSpeed);
     }, refreshRate);
 
     return () => clearInterval(gameloop);
@@ -204,13 +158,13 @@ export default function Play() {
   return (
     <main className={playstyles.main}>
       <div>
-        {/* <Platform
+        <Platform
           t={platform1Ref}
           width={100}
           bottom={15}
           right={0}
           height={10}
-        /> */}
+        />
         <Platform
           t={platform2Ref}
           width={10}
@@ -221,7 +175,8 @@ export default function Play() {
 
         <div
           style={{
-            backgroundColor: "aqua",
+            // backgroundImage: 'url("/assets/paul.png")',
+            backgroundColor: "blue",
             width: "1em",
             height: "1em",
             position: "absolute",
