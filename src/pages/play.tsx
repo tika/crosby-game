@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
 
@@ -9,12 +9,15 @@ export default function Play() {
   const [playerPos, setPlayerPos] = useState([0, 0]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
   const gravity = 0.0;
-  const acceleration = 0.5;
+  const acceleration = 0.03;
+  const choppiness = 0;
+  const maxSpeed = 2;
   const gap = 0;
-  const refreshRate = 2.5;
+  const refreshRate = 5;
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
+  const [keysdown, setKeysdown] = useState<string[]>([]);
 
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
@@ -22,31 +25,58 @@ export default function Play() {
 
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
-      // console.log(event.key);
       move(event.key);
     };
 
     document.addEventListener("keydown", r);
     return () => document.removeEventListener("keydown", r);
-  }, []);
+  });
 
-  function move(key: string) {
-    if (key === "w") {
-      setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
-    }
+  useEffect(() => {
+    const r = (event: KeyboardEvent) => {
+      if (event.key === "w" || event.key === "s") {
+        setPlayerSpeed([playerSpeed[0], 0]);
+      }
 
-    if (key === "a") {
-      setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
-    }
+      if (event.key === "a" || event.key === "d") {
+        setPlayerSpeed([0, playerSpeed[1]]);
+      }
 
-    if (key === "s") {
-      setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
-    }
+      let newKeysdown = keysdown;
 
-    if (key === "d") {
-      setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
-    }
-  }
+      newKeysdown = newKeysdown.filter((it) => it !== event.key.toLowerCase());
+
+      setKeysdown(newKeysdown);
+    };
+
+    document.addEventListener("keyup", r);
+    return () => document.removeEventListener("keyup", r);
+  });
+
+  const move = useCallback(
+    (key: string) => {
+      if (key === "w") {
+        setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
+        setKeysdown([...keysdown, "w"]);
+      }
+
+      if (key === "a") {
+        setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
+        setKeysdown([...keysdown, "a"]);
+      }
+
+      if (key === "s") {
+        setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
+        setKeysdown([...keysdown, "s"]);
+      }
+
+      if (key === "d") {
+        setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
+        setKeysdown([...keysdown, "d"]);
+      }
+    },
+    [playerSpeed, keysdown]
+  );
 
   // assumes current position is valid
   // returns { [validX, validY],
@@ -137,18 +167,43 @@ export default function Play() {
   // gameloop
   useEffect(() => {
     const gameloop = setInterval(() => {
-      let newPlayerSpeed = [playerSpeed[0], playerSpeed[1]];
-
       const newPosition = [
-        playerPos[0] + newPlayerSpeed[0],
-        playerPos[1] + newPlayerSpeed[1],
+        playerPos[0] + playerSpeed[0],
+        playerPos[1] + playerSpeed[1],
       ];
 
       const placement = getValidPlacement(newPosition as [number, number]);
 
       if (placement) {
         setPlayerPos(newPosition);
-        setPlayerSpeed(newPlayerSpeed);
+      }
+
+      if (keysdown.includes("w")) {
+        setPlayerSpeed([
+          playerSpeed[0],
+          Math.max(playerSpeed[1] - acceleration, -maxSpeed),
+        ]);
+      }
+
+      if (keysdown.includes("a")) {
+        setPlayerSpeed([
+          Math.max(playerSpeed[0] - acceleration, -maxSpeed),
+          playerSpeed[1],
+        ]);
+      }
+
+      if (keysdown.includes("s")) {
+        setPlayerSpeed([
+          playerSpeed[0],
+          Math.min(playerSpeed[1] + acceleration, maxSpeed),
+        ]);
+      }
+
+      if (keysdown.includes("d")) {
+        setPlayerSpeed([
+          Math.min(playerSpeed[0] + acceleration, maxSpeed),
+          playerSpeed[1],
+        ]);
       }
     }, refreshRate);
 

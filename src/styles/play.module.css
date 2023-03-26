@@ -12,4 +12,5 @@
   background-color: black;
   position: relative;
   overflow: hidden;
+  transition-duration: 50ms;
 }
