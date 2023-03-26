@@ -23,8 +23,11 @@ export default function Play() {
     []
   );
 
+  // console.log(keysdown, playerSpeed);
+
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
+      console.log(event.key);
       move(event.key);
     };
 
@@ -53,29 +56,45 @@ export default function Play() {
     return () => document.removeEventListener("keyup", r);
   });
 
+  const addKey = useCallback(
+    (key: "w" | "a" | "s" | "d") => {
+      setKeysdown((prev) => [...prev, key]);
+      setKeysdown([...keysdown, key]);
+    },
+    [keysdown]
+  );
+
   const move = useCallback(
     (key: string) => {
+      let newPlayerSpeed = playerSpeed;
+
       if (key === "w") {
-        setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
-        setKeysdown([...keysdown, "w"]);
+        // setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
+        newPlayerSpeed[1] = newPlayerSpeed[1] - acceleration;
+        addKey("w");
       }
 
       if (key === "a") {
-        setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
-        setKeysdown([...keysdown, "a"]);
+        // setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
+        newPlayerSpeed[0] = newPlayerSpeed[0] - acceleration;
+        addKey("a");
       }
 
       if (key === "s") {
-        setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
-        setKeysdown([...keysdown, "s"]);
+        // setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
+        newPlayerSpeed[1] = newPlayerSpeed[1] + acceleration;
+        addKey("s");
       }
 
       if (key === "d") {
-        setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
-        setKeysdown([...keysdown, "d"]);
+        // setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
+        newPlayerSpeed[0] = newPlayerSpeed[0] + acceleration;
+        addKey("d");
       }
+
+      setPlayerSpeed(newPlayerSpeed);
     },
-    [playerSpeed, keysdown]
+    [playerSpeed, addKey]
   );
 
   // assumes current position is valid
@@ -178,33 +197,28 @@ export default function Play() {
         setPlayerPos(newPosition);
       }
 
+      const tempPlayerSpeed = playerSpeed;
+
       if (keysdown.includes("w")) {
-        setPlayerSpeed([
-          playerSpeed[0],
-          Math.max(playerSpeed[1] - acceleration, -maxSpeed),
-        ]);
+        tempPlayerSpeed[1] = Math.max(
+          tempPlayerSpeed[1] - acceleration,
+          -maxSpeed
+        );
       }
 
       if (keysdown.includes("a")) {
-        setPlayerSpeed([
-          Math.max(playerSpeed[0] - acceleration, -maxSpeed),
-          playerSpeed[1],
-        ]);
+        tempPlayerSpeed[0] = Math.max(playerSpeed[0] - acceleration, -maxSpeed);
       }
 
       if (keysdown.includes("s")) {
-        setPlayerSpeed([
-          playerSpeed[0],
-          Math.min(playerSpeed[1] + acceleration, maxSpeed),
-        ]);
+        tempPlayerSpeed[1] = Math.min(playerSpeed[1] + acceleration, maxSpeed);
       }
 
       if (keysdown.includes("d")) {
-        setPlayerSpeed([
-          Math.min(playerSpeed[0] + acceleration, maxSpeed),
-          playerSpeed[1],
-        ]);
+        tempPlayerSpeed[0] = Math.min(playerSpeed[0] + acceleration, maxSpeed);
       }
+
+      setPlayerSpeed(tempPlayerSpeed);
     }, refreshRate);
 
     return () => clearInterval(gameloop);
