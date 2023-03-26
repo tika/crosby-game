@@ -3,11 +3,14 @@ import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
 
 type Conditions = [boolean, boolean, boolean, boolean];
+type Collision = [1 | 0 | -1, 1 | 0 | -1];
 
 export default function Play() {
-  const [playerPos, setPlayerPos] = useState([0, 625]);
-  const [playerSpeed, setPlayerSpeed] = useState([1, 0]);
-  const gravity = 0.02;
+  const [playerPos, setPlayerPos] = useState([0, 0]);
+  const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
+  const gravity = 0.0;
+  const acceleration = 2;
+  const gap = acceleration + 0.1;
   const refreshRate = 10;
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
@@ -20,18 +23,46 @@ export default function Play() {
   // []
   // [[false, false, false, false], [false, false, false, false], [false, false, false, false]]
 
-  // assumes current position is vali
+  useEffect(() => {
+    const r = (event: KeyboardEvent) => {
+      // console.log(event.key);
+      move(event.key);
+    };
+
+    document.addEventListener("keydown", r);
+    return () => document.removeEventListener("keydown", r);
+  }, []);
+
+  function move(key: string) {
+    if (key === "w") {
+      setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
+    }
+
+    if (key === "a") {
+      setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
+    }
+
+    if (key === "s") {
+      setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
+    }
+
+    if (key === "d") {
+      setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
+    }
+  }
+
+  // assumes current position is valid
   // returns { [validX, validY],
   function getValidPlacement([x, y]: [number, number]): {
     coords: [number, number];
-    collision: [boolean, boolean];
+    collision: Collision;
   } {
-    if (!playerRef.current || !platform1Ref.current || !platform2Ref.current)
-      return { coords: [x, y], collision: [false, false] };
+    if (!playerRef.current || !platform2Ref.current)
+      return { coords: [x, y], collision: [0, 0] };
 
     const playerBox = playerRef.current.getBoundingClientRect();
     const platformBoxes = [
-      platform1Ref.current.getBoundingClientRect(),
+      // platform1Ref.current.getBoundingClientRect(),§
       platform2Ref.current.getBoundingClientRect(),
     ];
 
@@ -44,16 +75,15 @@ export default function Play() {
 
     let finalCoords = {
       coords: [x, y] as [number, number],
-      collision: [false, false] as [boolean, boolean],
+      collision: [0, 0] as Collision,
     };
 
     let returnVals = [x, y];
-    let returnCollision = [false, false];
+    // [1 or 0 or -1 (+ve collison or -ve collision or no collision), 1 or 0 or -1]
+    let returnCollision: Collision = [0, 0];
 
     for (let i = 0; i < platformBoxes.length; i++) {
       const currentPlatformBox = platformBoxes[i];
-
-      console.log(currentPlatformBox.toJSON(), playerBox.toJSON());
 
       const conditions = [
         right > currentPlatformBox.left && right <= currentPlatformBox.right,
@@ -62,104 +92,69 @@ export default function Play() {
         bottom < currentPlatformBox.bottom && bottom >= currentPlatformBox.top,
       ];
 
-      // let tempPrevConditions = []; // [][]
-
-      // if (tempPrevConditions.length < i + 1) {
-      //   // tempPrevConditions = [...tempPrevConditions, conditions as Conditions];
-      //   tempPrevConditions.push(conditions);
-      // } else {
-      //   tempPrevConditions[i] = conditions;
-      // }
-      //   const newPrevConditions = prevConditions;
-
-      //   newPrevConditions[i] = conditions as Conditions;
-
-      //   tempPrevConditions = newPrevConditions;
-      // }
-
       // The new previous conditions - when go to new if statement
       // then update array
       let tempPreviousConditions = previousConditions[i];
 
       if (!tempPreviousConditions || tempPreviousConditions.length < i + 1) {
-        tempPreviousConditions = conditions as Conditions;
+        tempPreviousConditions = [false, false, false, false];
       }
 
       if (conditions[0] && conditions[2]) {
         if (tempPreviousConditions[2]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [true, returnCollision[1]];
+          returnCollision = [1, returnCollision[1]];
           returnVals = [
-            currentPlatformBox.left - playerBox.width,
+            currentPlatformBox.left - playerBox.width - gap,
             returnVals[1],
           ];
         } else {
-          console.log("1");
           tempPreviousConditions[2] = false;
-          returnCollision = [returnCollision[0], true];
-          returnVals = [
-            returnVals[0],
-            currentPlatformBox.bottom + playerBox.height,
-          ];
+          returnCollision = [returnCollision[0], -1];
+          returnVals = [returnVals[0], currentPlatformBox.bottom + gap];
         }
-      }
-
-      if (conditions[0] && conditions[3]) {
+      } else if (conditions[0] && conditions[3]) {
         if (tempPreviousConditions[3]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [true, returnCollision[1]];
+          returnCollision = [1, returnCollision[1]];
           returnVals = [
-            currentPlatformBox.left - playerBox.width,
+            currentPlatformBox.left - playerBox.width - gap,
             returnVals[1],
           ];
         } else {
+          // console.log("2");
           tempPreviousConditions[3] = false;
-          returnCollision = [returnCollision[0], true];
+          returnCollision = [returnCollision[0], 1];
           returnVals = [
             returnVals[0],
-            currentPlatformBox.top - playerBox.height,
+            currentPlatformBox.top - playerBox.height - gap,
           ];
         }
-      }
-
-      if (conditions[1] && conditions[2]) {
+      } else if (conditions[1] && conditions[2]) {
         if (tempPreviousConditions[2]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [true, returnCollision[1]];
-          returnVals = [
-            currentPlatformBox.right + playerBox.width,
-            returnVals[1],
-          ];
+          returnCollision = [-1, returnCollision[1]];
+          returnVals = [currentPlatformBox.right + gap, returnVals[1]];
         } else {
           tempPreviousConditions[2] = false;
-          returnCollision = [returnCollision[0], true];
-          returnVals = [
-            returnVals[0],
-            currentPlatformBox.bottom + playerBox.height,
-          ];
+          returnCollision = [returnCollision[0], -1];
+          returnVals = [returnVals[0], currentPlatformBox.bottom + gap];
         }
-      }
-
-      if (conditions[1] && conditions[3]) {
+      } else if (conditions[1] && conditions[3]) {
         if (tempPreviousConditions[3]) {
           tempPreviousConditions[0] = false;
-          returnCollision = [true, returnCollision[1]];
-          returnVals = [
-            currentPlatformBox.right + playerBox.width,
-            returnVals[1],
-          ];
+          returnCollision = [-1, returnCollision[1]];
+          returnVals = [currentPlatformBox.right + gap, returnVals[1]];
         } else {
-          console.log("2");
-
           tempPreviousConditions[3] = false;
-          returnCollision = [returnCollision[0], true];
+          returnCollision = [returnCollision[0], 1];
           returnVals = [
             returnVals[0],
-            currentPlatformBox.top - playerBox.height,
+            currentPlatformBox.top - playerBox.height - gap,
           ];
         }
       }
-
+      tempPreviousConditions = conditions as Conditions;
       // Now change to 2d array
       const a = previousConditions;
 
@@ -170,19 +165,10 @@ export default function Play() {
       }
 
       setPreviousConditions(a);
-
-      // if (returnVals[0] !== -1 || returnVals[1] !== -1) {
-      // finalCoords = coords: returnVals as [number, number];
-
-      // console.log(returnVals);
-      // }
     }
-
-    console.log(returnCollision);
-
     finalCoords = {
       coords: returnVals as [number, number],
-      collision: returnCollision as [boolean, boolean],
+      collision: returnCollision,
     };
 
     return finalCoords;
@@ -190,38 +176,46 @@ export default function Play() {
 
   // gameloop
   useEffect(() => {
-    const t = setInterval(() => {
-      const newSpeed = gravity + playerSpeed[1];
+    const gameloop = setInterval(() => {
       const placement = getValidPlacement(playerPos as [number, number]);
-      setPlayerPos([
-        placement.coords[0] + playerSpeed[0],
-        placement.coords[1] + newSpeed,
-      ]);
 
-      setPlayerSpeed([
-        placement.collision[0] ? 1 : playerSpeed[0],
-        placement.collision[1] ? 0 : newSpeed,
+      console.log(placement.collision);
+
+      let newPlayerSpeed = [playerSpeed[0], playerSpeed[1] + gravity];
+
+      if (placement.collision[0] !== 0) {
+        newPlayerSpeed = [0, newPlayerSpeed[1]];
+      }
+
+      if (placement.collision[1] !== 0) {
+        newPlayerSpeed = [newPlayerSpeed[0], 0];
+      }
+
+      setPlayerPos([
+        placement.coords[0] + newPlayerSpeed[0],
+        placement.coords[1] + newPlayerSpeed[1],
       ]);
+      setPlayerSpeed(newPlayerSpeed);
     }, refreshRate);
 
-    return () => clearInterval(t);
+    return () => clearInterval(gameloop);
   });
 
   return (
     <main className={playstyles.main}>
       <div>
-        <Platform
+        {/* <Platform
           t={platform1Ref}
           width={100}
-          bottom={0}
+          bottom={15}
           right={0}
           height={10}
-        />
+        /> */}
         <Platform
           t={platform2Ref}
           width={10}
-          bottom={0}
-          right={0}
+          bottom={20}
+          right={20}
           height={100}
         />
 
