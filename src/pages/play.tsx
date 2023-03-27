@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
+import playerImage from "../public/assets/paul.png";
+import manserImage from "../public/assets/man.png";
+import { Spliff } from "../components/spliff";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 type Collision = [1 | 0 | -1, 1 | 0 | -1];
@@ -8,7 +11,7 @@ type Collision = [1 | 0 | -1, 1 | 0 | -1];
 export default function Play() {
   const [playerPos, setPlayerPos] = useState([0, 0]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
-  const gravity = 0.0;
+  const gravity = 0.01;
   const acceleration = 0.03;
   const choppiness = 0;
   const maxSpeed = 2;
@@ -18,6 +21,8 @@ export default function Play() {
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
   const [keysdown, setKeysdown] = useState<string[]>([]);
+  const mansoorRef = useRef<HTMLDivElement | null>(null);
+  const [mansoorPos, setMansoorPos] = useState([400, 500]);
 
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
@@ -27,7 +32,7 @@ export default function Play() {
 
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
-      console.log(event.key);
+      // console.log(event.key);
       move(event.key);
     };
 
@@ -129,7 +134,6 @@ export default function Play() {
       // The new previous conditions - when go to new if statement
       // then update array
       let tempPreviousConditions = previousConditions[i];
-
       if (!tempPreviousConditions || tempPreviousConditions.length < i + 1) {
         tempPreviousConditions = [false, false, false, false];
       }
@@ -192,12 +196,15 @@ export default function Play() {
       ];
 
       const placement = getValidPlacement(newPosition as [number, number]);
-
+      // console.log(placement);
+      const tempPlayerSpeed = playerSpeed;
       if (placement) {
         setPlayerPos(newPosition);
+      } else {
+        tempPlayerSpeed[1] = -gravity;
       }
-
-      const tempPlayerSpeed = playerSpeed;
+      // console.log(tempPlayerSpeed);
+      tempPlayerSpeed[1] = Math.min(tempPlayerSpeed[1] + gravity, maxSpeed);
 
       if (keysdown.includes("w")) {
         tempPlayerSpeed[1] = Math.max(
@@ -219,8 +226,14 @@ export default function Play() {
       }
 
       setPlayerSpeed(tempPlayerSpeed);
-    }, refreshRate);
 
+      setTimeout(() => {
+        const yDist = playerPos[1] - mansoorPos[1];
+        const xDist = playerPos[0] - mansoorPos[0];
+
+        setMansoorPos([mansoorPos[0] + xDist / 50, mansoorPos[1] + yDist / 50]);
+      }, 20);
+    }, refreshRate);
     return () => clearInterval(gameloop);
   });
 
@@ -242,18 +255,37 @@ export default function Play() {
           height={100}
         />
 
+        <Spliff bottom={34} right={34} />
+
         <div
           style={{
-            // backgroundImage: 'url("/assets/paul.png")',
-            backgroundColor: "blue",
-            width: "1em",
-            height: "1em",
+            backgroundImage: "url(" + playerImage.src + ")",
+            // backgroundColor: "blue",
+            backgroundSize: "cover",
+            width: "4em",
+            height: "4em",
             position: "absolute",
             top: playerPos[1],
             left: playerPos[0],
           }}
           ref={playerRef}
-        ></div>
+        />
+
+        <div
+          style={{
+            backgroundImage: "url(" + manserImage.src + ")",
+
+            backgroundSize: "cover",
+            width: "3em",
+            height: "3em",
+            bottom: "3px",
+            right: "3px",
+            position: "absolute",
+            top: mansoorPos[1],
+            left: mansoorPos[0],
+          }}
+          ref={mansoorRef}
+        />
       </div>
     </main>
   );

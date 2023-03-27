@@ -13,4 +13,31 @@
   position: relative;
   overflow: hidden;
   transition-duration: 50ms;
+  animation-direction: alternate;
+  animation-timing-function: cubic-bezier(0.5, 0.05, 1, 0.5);
+  animation-iteration-count: infinite;
+}
+
+/* .ball {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #ff5722;
+  animation: bounce 1s;
+  animation-direction: alternate;
+  animation-timing-function: cubic-bezier(0.5, 0.05, 1, 0.5);
+  animation-iteration-count: infinite;
+} */
+
+.trail-1 {
+  background: rgba(220, 127, 127, 0.4);
+  animation-delay: 20ms;
+  filter: blur(1px);
+}
+
+.trail-2 {
+  background: rgba(220, 127, 127, 0.2);
+  animation-delay: 40ms;
+  filter: blur(2px);
 }
