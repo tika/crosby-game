@@ -18,6 +18,7 @@ export function Spliff(props: {
         position: "absolute",
       }}
       className="spliff"
+      ref={props.t}
     ></div>
   );
 }

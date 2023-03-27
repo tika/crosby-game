@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createRef, useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
 import playerImage from "../public/assets/paul.png";
 import manserImage from "../public/assets/man.png";
 import { Spliff } from "../components/spliff";
+import { isIntersecting } from "../lib/intersection";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 type Collision = [1 | 0 | -1, 1 | 0 | -1];
@@ -20,9 +21,11 @@ export default function Play() {
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
+  let spliffRef = useRef<HTMLDivElement | null>(null);
   const [keysdown, setKeysdown] = useState<string[]>([]);
   const mansoorRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
+  const [score, setScore] = useState(0);
 
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
@@ -125,10 +128,10 @@ export default function Play() {
       const currentPlatformBox = platformBoxes[i];
 
       const conditions = [
-        right > currentPlatformBox.left && right <= currentPlatformBox.right,
-        left < currentPlatformBox.right && left >= currentPlatformBox.left,
-        top > currentPlatformBox.top && top <= currentPlatformBox.bottom,
-        bottom < currentPlatformBox.bottom && bottom >= currentPlatformBox.top,
+        right > currentPlatformBox.left && right < currentPlatformBox.right,
+        left < currentPlatformBox.right && left > currentPlatformBox.left,
+        top > currentPlatformBox.top && top < currentPlatformBox.bottom,
+        bottom < currentPlatformBox.bottom && bottom > currentPlatformBox.top,
       ];
 
       // The new previous conditions - when go to new if statement
@@ -233,6 +236,15 @@ export default function Play() {
 
         setMansoorPos([mansoorPos[0] + xDist / 50, mansoorPos[1] + yDist / 50]);
       }, 20);
+
+      if (playerRef && spliffRef && playerRef.current && spliffRef.current) {
+        console.log("hello");
+        if (isIntersecting(playerRef.current, spliffRef.current)) {
+          spliffRef.current.style.top = "100000em";
+          spliffRef.current.style.left = "100000em";
+          setScore(score + 1);
+        }
+      }
     }, refreshRate);
     return () => clearInterval(gameloop);
   });
@@ -255,12 +267,11 @@ export default function Play() {
           height={100}
         />
 
-        <Spliff bottom={34} right={34} />
+        <Spliff bottom={34} right={34} t={spliffRef} />
 
         <div
           style={{
             backgroundImage: "url(" + playerImage.src + ")",
-            // backgroundColor: "blue",
             backgroundSize: "cover",
             width: "4em",
             height: "4em",
@@ -274,7 +285,6 @@ export default function Play() {
         <div
           style={{
             backgroundImage: "url(" + manserImage.src + ")",
-
             backgroundSize: "cover",
             width: "3em",
             height: "3em",
@@ -287,6 +297,7 @@ export default function Play() {
           ref={mansoorRef}
         />
       </div>
+      <h1>{score}</h1>
     </main>
   );
 }
