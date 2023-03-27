@@ -12,12 +12,15 @@ type Collision = [1 | 0 | -1, 1 | 0 | -1];
 export default function Play() {
   const [playerPos, setPlayerPos] = useState([0, 0]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
-  const gravity = 0.01;
-  const acceleration = 0.03;
-  const choppiness = 0;
-  const maxSpeed = 2;
-  const gap = 0;
-  const refreshRate = 5;
+  const baseGravity = 0.01;
+  const [gravity, setGravity] = useState(0.01);
+  const baseAcceleration = 0.03;
+  const [acceleration, setAcceleration] = useState(0.03);
+  const [choppiness, setChoppiness] = useState(1);
+  const baseMaxSpeed = 2;
+  const [maxSpeed, setMaxSpeed] = useState(2);
+  const baseRefreshRate = 5;
+  const [refreshRate, setRefreshRate] = useState(5);
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
@@ -26,6 +29,7 @@ export default function Play() {
   const mansoorRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
   const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
 
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
@@ -102,19 +106,20 @@ export default function Play() {
 
       setPlayerSpeed(newPlayerSpeed);
     },
-    [playerSpeed, addKey]
+    [playerSpeed, addKey, acceleration]
   );
 
   // assumes current position is valid
   // returns { [validX, validY],
   function getValidPlacement([x, y]: [number, number]): boolean {
-    if (!playerRef.current || !platform2Ref.current || !platform1Ref.current)
-      return false;
+    // if (!playerRef.current || !platform2Ref.current || !platform1Ref.current)
+    // return false;
+    if (!playerRef.current) return false;
 
     const playerBox = playerRef.current.getBoundingClientRect();
-    const platformBoxes = [
-      platform1Ref.current.getBoundingClientRect(),
-      platform2Ref.current.getBoundingClientRect(),
+    const platformBoxes: any[] = [
+      // platform1Ref.current.getBoundingClientRect(),
+      // platform2Ref.current.getBoundingClientRect(),
     ];
 
     const [top, right, bottom, left] = [
@@ -236,13 +241,23 @@ export default function Play() {
 
         setMansoorPos([mansoorPos[0] + xDist / 50, mansoorPos[1] + yDist / 50]);
       }, 20);
-
+      if (playerRef && mansoorRef && playerRef.current && mansoorRef.current) {
+        if (isIntersecting(playerRef.current, mansoorRef.current)) {
+          setGameOver(true);
+        }
+      }
       if (playerRef && spliffRef && playerRef.current && spliffRef.current) {
-        console.log("hello");
+        // console.log("hello");
         if (isIntersecting(playerRef.current, spliffRef.current)) {
-          spliffRef.current.style.top = "100000em";
-          spliffRef.current.style.left = "100000em";
+          // get random number between 0 and 200
+          spliffRef.current.style.top = `${Math.floor(Math.random() * 100)}vh`;
+          spliffRef.current.style.left = `${Math.floor(Math.random() * 100)}vh`;
           setScore(score + 1);
+          setChoppiness(score * 0.2 + 1);
+          setAcceleration(baseAcceleration * choppiness);
+          setRefreshRate(baseRefreshRate * choppiness);
+          setGravity(baseGravity * choppiness);
+          setMaxSpeed(baseMaxSpeed * choppiness);
         }
       }
     }, refreshRate);
@@ -251,8 +266,15 @@ export default function Play() {
 
   return (
     <main className={playstyles.main}>
-      <div>
-        <Platform
+      {gameOver ? (
+        <section>
+          <p>Game Over</p>
+          <p>You smoked {score} zoots</p>
+        </section>
+      ) : (
+        <>
+          <div>
+            {/* <Platform
           t={platform1Ref}
           width={100}
           bottom={15}
@@ -265,39 +287,41 @@ export default function Play() {
           bottom={20}
           right={20}
           height={100}
-        />
+        /> */}
 
-        <Spliff bottom={34} right={34} t={spliffRef} />
+            <Spliff bottom={34} right={34} t={spliffRef} />
 
-        <div
-          style={{
-            backgroundImage: "url(" + playerImage.src + ")",
-            backgroundSize: "cover",
-            width: "4em",
-            height: "4em",
-            position: "absolute",
-            top: playerPos[1],
-            left: playerPos[0],
-          }}
-          ref={playerRef}
-        />
+            <div
+              style={{
+                backgroundImage: "url(" + playerImage.src + ")",
+                backgroundSize: "cover",
+                width: "4em",
+                height: "4em",
+                position: "absolute",
+                top: playerPos[1],
+                left: playerPos[0],
+              }}
+              ref={playerRef}
+            />
 
-        <div
-          style={{
-            backgroundImage: "url(" + manserImage.src + ")",
-            backgroundSize: "cover",
-            width: "3em",
-            height: "3em",
-            bottom: "3px",
-            right: "3px",
-            position: "absolute",
-            top: mansoorPos[1],
-            left: mansoorPos[0],
-          }}
-          ref={mansoorRef}
-        />
-      </div>
-      <h1>{score}</h1>
+            <div
+              style={{
+                backgroundImage: "url(" + manserImage.src + ")",
+                backgroundSize: "cover",
+                width: "3em",
+                height: "3em",
+                bottom: "3px",
+                right: "3px",
+                position: "absolute",
+                top: mansoorPos[1],
+                left: mansoorPos[0],
+              }}
+              ref={mansoorRef}
+            />
+          </div>
+          <h1>{score}</h1>
+        </>
+      )}
     </main>
   );
 }
