@@ -44,12 +44,26 @@ export default function Play() {
   const platform19Ref = useRef<HTMLDivElement | null>(null);
   const platform20Ref = useRef<HTMLDivElement | null>(null);
 
+  const [direction, setDirection] = useState<"right" | "left">("right");
+
   let spliffRef = useRef<HTMLDivElement | null>(null);
   const [keysdown, setKeysdown] = useState<string[]>([]);
   const mansoorRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+
+  function getRand(): [number, number] {
+    return [Math.floor(Math.random() * 100), Math.floor(Math.random() * 100)];
+  }
+
+  const [randomPos, setRandomPos] = useState<[number, number][]>([
+    getRand(),
+    getRand(),
+    getRand(),
+    getRand(),
+    getRand(),
+  ]);
 
   const platforms = [
     platform1Ref.current,
@@ -132,6 +146,7 @@ export default function Play() {
         // setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
         newPlayerSpeed[0] = newPlayerSpeed[0] - acceleration;
         addKey("a");
+        setDirection("left");
       }
 
       if (key === "s") {
@@ -144,6 +159,7 @@ export default function Play() {
         // setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
         newPlayerSpeed[0] = newPlayerSpeed[0] + acceleration;
         addKey("d");
+        setDirection("right");
       }
 
       setPlayerSpeed(newPlayerSpeed);
@@ -318,20 +334,15 @@ export default function Play() {
               backgroundColor: "red",
               width: "100vh",
               height: "100vh",
-              filter: `opacity(${Math.min(score, 25)}%)`,
+              filter: `opacity(${Math.min(score, 90)}%)`,
               position: "absolute",
               top: 0,
               left: 0,
               zIndex: 100,
             }}
+            className={playstyles.m}
           />
-          <div
-            style={{
-              backgroundImage: "url(" + crosby.src + ")",
-              backgroundSize: "cover",
-              
-            }}
-          >
+          <div>
             <Platform
               t={platform1Ref}
               width={"100vh"}
@@ -382,7 +393,7 @@ export default function Play() {
               width={"10px"}
               bottom={"calc(100vh - 10px - 4em)"}
               right={"calc(10px + 4em)"}
-              height={"3em"}
+              height={"30px"}
             />
 
             <Platform
@@ -390,15 +401,72 @@ export default function Play() {
               width={"10px"}
               bottom={"calc(10px + 4em)"}
               right={"calc((100vh - 20px)/2)"}
-              height={"120px"}
+              height={"100px"}
             />
 
             <Platform
               t={platform9Ref}
-              width={""}
-              bottom={"calc(10px+100px)"}
-              right={"calc((100vh - 20px)/2)"}
+              width={"50px"}
+              bottom={`${randomPos[0][0]}vh`}
+              right={`${randomPos[0][1]}vh`}
+              height={"50px"}
+            />
+            <Platform
+              t={platform10Ref}
+              width={"50px"}
+              bottom={`${randomPos[1][0]}vh`}
+              right={`${randomPos[1][1]}vh`}
+              height={"50px"}
+            />
+            <Platform
+              t={platform11Ref}
+              width={"50px"}
+              bottom={`${randomPos[2][0]}vh`}
+              right={`${randomPos[2][1]}vh`}
+              height={"50px"}
+            />
+            <Platform
+              t={platform12Ref}
+              width={"50px"}
+              bottom={`${randomPos[3][0]}vh`}
+              right={`${randomPos[3][1]}vh`}
+              height={"50px"}
+            />
+            <Platform
+              t={platform13Ref}
+              width={"50px"}
+              bottom={`${randomPos[4][0]}vh`}
+              right={`${randomPos[4][1]}vh`}
+              height={"50px"}
+            />
+
+            <Platform
+              t={platform14Ref}
+              width={"200px"}
+              bottom={`calc(100vh/2 - 50px)`}
+              right={`calc(100vh/2 - 100px)`}
               height={"10px"}
+            />
+            <Platform
+              t={platform15Ref}
+              width={"10px"}
+              bottom={`calc(100vh/2 - 50px)`}
+              right={`calc(100vh/2 - 100px)`}
+              height={"150px"}
+            />
+            <Platform
+              t={platform16Ref}
+              width={"200px"}
+              bottom={`calc(100vh/2 + 100px)`}
+              right={`calc(100vh/2 - 100px)`}
+              height={"10px"}
+            />
+            <Platform
+              t={platform17Ref}
+              width={"10px"}
+              bottom={`calc(100vh/2 - 50px)`}
+              right={`calc(100vh/2 + 100px)`}
+              height={"80px"}
             />
 
             <Spliff bottom={34} right={34} t={spliffRef} />
@@ -412,6 +480,7 @@ export default function Play() {
                 position: "absolute",
                 top: playerPos[1],
                 left: playerPos[0],
+                transform: `scaleX(${direction === "right" ? -1 : 1})`,
               }}
               ref={playerRef}
             />
