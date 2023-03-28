@@ -1,10 +1,10 @@
 import { MutableRefObject } from "react";
 
 export function Platform(props: {
-  height: number;
-  width: number;
-  bottom: number;
-  right: number;
+  height: string;
+  width: string;
+  bottom: string;
+  right: string;
   vertical?: boolean;
   t: MutableRefObject<HTMLDivElement | null>;
 }) {
@@ -13,10 +13,10 @@ export function Platform(props: {
       ref={props.t}
       style={{
         height: props.height,
-        width: props.width + "%",
-        backgroundColor: "red",
-        bottom: props.bottom + "em",
-        right: props.right + "em",
+        width: props.width,
+        backgroundColor: "black",
+        bottom: props.bottom,
+        right: props.right,
         position: "absolute",
       }}
     ></div>

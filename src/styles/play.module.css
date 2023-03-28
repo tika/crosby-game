@@ -9,7 +9,7 @@
 .main > div {
   width: 100vh;
   height: 100vh;
-  background-color: black;
+  /* background-color: white; */
   position: relative;
   overflow: hidden;
   transition-duration: 50ms;

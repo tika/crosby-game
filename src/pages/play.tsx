@@ -3,20 +3,19 @@ import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
 import playerImage from "../public/assets/paul.png";
 import manserImage from "../public/assets/man.png";
+import crosby from "../public/assets/crosby.png";
 import { Spliff } from "../components/spliff";
 import { isIntersecting } from "../lib/intersection";
 
 type Conditions = [boolean, boolean, boolean, boolean];
-type Collision = [1 | 0 | -1, 1 | 0 | -1];
 
 export default function Play() {
-  const [playerPos, setPlayerPos] = useState([0, 0]);
+  const [playerPos, setPlayerPos] = useState([10, 10]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
   const baseGravity = 0.01;
   const [gravity, setGravity] = useState(0.01);
   const baseAcceleration = 0.03;
   const [acceleration, setAcceleration] = useState(0.03);
-  const [choppiness, setChoppiness] = useState(1);
   const baseMaxSpeed = 2;
   const [maxSpeed, setMaxSpeed] = useState(2);
   const baseRefreshRate = 5;
@@ -24,12 +23,55 @@ export default function Play() {
   const playerRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
+  const platform3Ref = useRef<HTMLDivElement | null>(null);
+  const platform4Ref = useRef<HTMLDivElement | null>(null);
+
+  const platform5Ref = useRef<HTMLDivElement | null>(null);
+  const platform6Ref = useRef<HTMLDivElement | null>(null);
+  const platform7Ref = useRef<HTMLDivElement | null>(null);
+  const platform8Ref = useRef<HTMLDivElement | null>(null);
+
+  const platform9Ref = useRef<HTMLDivElement | null>(null);
+  const platform10Ref = useRef<HTMLDivElement | null>(null);
+  const platform11Ref = useRef<HTMLDivElement | null>(null);
+  const platform12Ref = useRef<HTMLDivElement | null>(null);
+  const platform13Ref = useRef<HTMLDivElement | null>(null);
+  const platform14Ref = useRef<HTMLDivElement | null>(null);
+  const platform15Ref = useRef<HTMLDivElement | null>(null);
+  const platform16Ref = useRef<HTMLDivElement | null>(null);
+  const platform17Ref = useRef<HTMLDivElement | null>(null);
+  const platform18Ref = useRef<HTMLDivElement | null>(null);
+  const platform19Ref = useRef<HTMLDivElement | null>(null);
+  const platform20Ref = useRef<HTMLDivElement | null>(null);
+
   let spliffRef = useRef<HTMLDivElement | null>(null);
   const [keysdown, setKeysdown] = useState<string[]>([]);
   const mansoorRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+
+  const platforms = [
+    platform1Ref.current,
+    platform2Ref.current,
+    platform3Ref.current,
+    platform4Ref.current,
+    platform5Ref.current,
+    platform6Ref.current,
+    platform7Ref.current,
+    platform8Ref.current,
+    platform10Ref.current,
+    platform11Ref.current,
+    platform12Ref.current,
+    platform13Ref.current,
+    platform14Ref.current,
+    platform15Ref.current,
+    platform16Ref.current,
+    platform17Ref.current,
+    platform18Ref.current,
+    platform19Ref.current,
+    platform20Ref.current,
+  ];
 
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
@@ -112,15 +154,15 @@ export default function Play() {
   // assumes current position is valid
   // returns { [validX, validY],
   function getValidPlacement([x, y]: [number, number]): boolean {
-    // if (!playerRef.current || !platform2Ref.current || !platform1Ref.current)
-    // return false;
+    if (!playerRef.current || !platform2Ref.current || !platform1Ref.current)
+      return false;
     if (!playerRef.current) return false;
 
     const playerBox = playerRef.current.getBoundingClientRect();
-    const platformBoxes: any[] = [
-      // platform1Ref.current.getBoundingClientRect(),
-      // platform2Ref.current.getBoundingClientRect(),
-    ];
+
+    const platformBoxes: (DOMRect | undefined)[] = platforms.map((it) =>
+      it?.getBoundingClientRect()
+    );
 
     const [top, right, bottom, left] = [
       y,
@@ -131,6 +173,8 @@ export default function Play() {
 
     for (let i = 0; i < platformBoxes.length; i++) {
       const currentPlatformBox = platformBoxes[i];
+
+      if (!currentPlatformBox) continue;
 
       const conditions = [
         right > currentPlatformBox.left && right < currentPlatformBox.right,
@@ -179,6 +223,7 @@ export default function Play() {
           return false;
         }
       }
+
       tempPreviousConditions = conditions as Conditions;
       // Now change to 2d array
       const a = previousConditions;
@@ -241,11 +286,6 @@ export default function Play() {
 
         setMansoorPos([mansoorPos[0] + xDist / 50, mansoorPos[1] + yDist / 50]);
       }, 20);
-      if (playerRef && mansoorRef && playerRef.current && mansoorRef.current) {
-        if (isIntersecting(playerRef.current, mansoorRef.current)) {
-          setGameOver(true);
-        }
-      }
       if (playerRef && spliffRef && playerRef.current && spliffRef.current) {
         // console.log("hello");
         if (isIntersecting(playerRef.current, spliffRef.current)) {
@@ -253,7 +293,7 @@ export default function Play() {
           spliffRef.current.style.top = `${Math.floor(Math.random() * 100)}vh`;
           spliffRef.current.style.left = `${Math.floor(Math.random() * 100)}vh`;
           setScore(score + 1);
-          setChoppiness(score * 0.2 + 1);
+          const choppiness = score * 0.2 + 1;
           setAcceleration(baseAcceleration * choppiness);
           setRefreshRate(baseRefreshRate * choppiness);
           setGravity(baseGravity * choppiness);
@@ -273,21 +313,93 @@ export default function Play() {
         </section>
       ) : (
         <>
-          <div>
-            {/* <Platform
-          t={platform1Ref}
-          width={100}
-          bottom={15}
-          right={0}
-          height={10}
-        />
-        <Platform
-          t={platform2Ref}
-          width={10}
-          bottom={20}
-          right={20}
-          height={100}
-        /> */}
+          <div
+            style={{
+              backgroundColor: "red",
+              width: "100vh",
+              height: "100vh",
+              filter: `opacity(${Math.min(score, 25)}%)`,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              zIndex: 100,
+            }}
+          />
+          <div
+            style={{
+              backgroundImage: "url(" + crosby.src + ")",
+              backgroundSize: "cover",
+              
+            }}
+          >
+            <Platform
+              t={platform1Ref}
+              width={"100vh"}
+              bottom={"0px"}
+              right={"0px"}
+              height={"10px"}
+            />
+            <Platform
+              t={platform2Ref}
+              width={"10px"}
+              bottom={"0px"}
+              right={"0px"}
+              height={"100vh"}
+            />
+            <Platform
+              t={platform3Ref}
+              width={"10px"}
+              bottom={"0"}
+              right={"calc(100vh - 10px)"}
+              height={"100vh"}
+            />
+            <Platform
+              t={platform4Ref}
+              width={"100vh"}
+              bottom={"calc(100vh - 10px)"}
+              right={"0px"}
+              height={"10px"}
+            />
+
+            <Platform
+              t={platform5Ref}
+              width={"calc(100vh - 20px - 2*4em)"}
+              bottom={"4em"}
+              right={"calc(10px + 4em)"}
+              height={"10px"}
+            />
+
+            <Platform
+              t={platform6Ref}
+              width={"calc(100vh - 20px - 2*4em)"}
+              bottom={"calc(100vh - 10px - 4em)"}
+              right={"calc(10px + 4em)"}
+              height={"10px"}
+            />
+
+            <Platform
+              t={platform7Ref}
+              width={"10px"}
+              bottom={"calc(100vh - 10px - 4em)"}
+              right={"calc(10px + 4em)"}
+              height={"3em"}
+            />
+
+            <Platform
+              t={platform8Ref}
+              width={"10px"}
+              bottom={"calc(10px + 4em)"}
+              right={"calc((100vh - 20px)/2)"}
+              height={"120px"}
+            />
+
+            <Platform
+              t={platform9Ref}
+              width={""}
+              bottom={"calc(10px+100px)"}
+              right={"calc((100vh - 20px)/2)"}
+              height={"10px"}
+            />
 
             <Spliff bottom={34} right={34} t={spliffRef} />
 
@@ -295,8 +407,8 @@ export default function Play() {
               style={{
                 backgroundImage: "url(" + playerImage.src + ")",
                 backgroundSize: "cover",
-                width: "4em",
-                height: "4em",
+                width: "1em",
+                height: "1em",
                 position: "absolute",
                 top: playerPos[1],
                 left: playerPos[0],
@@ -308,8 +420,8 @@ export default function Play() {
               style={{
                 backgroundImage: "url(" + manserImage.src + ")",
                 backgroundSize: "cover",
-                width: "3em",
-                height: "3em",
+                width: "2em",
+                height: "2em",
                 bottom: "3px",
                 right: "3px",
                 position: "absolute",
