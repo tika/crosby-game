@@ -6,21 +6,34 @@ import manserImage from "../public/assets/man.png";
 import crosby from "../public/assets/crosby.png";
 import { Spliff } from "../components/spliff";
 import { isIntersecting } from "../lib/intersection";
+import { Vape } from "../components/vape";
+import exclaImage from "../public/assets/excla.png";
+import keaImage from "../public/assets/kea.png";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 
 export default function Play() {
-  const [playerPos, setPlayerPos] = useState([10, 10]);
+  const [playerPos, setPlayerPos] = useState([10, 500]);
   const [playerSpeed, setPlayerSpeed] = useState([0, 0]);
   const baseGravity = 0.01;
   const [gravity, setGravity] = useState(0.01);
   const baseAcceleration = 0.03;
   const [acceleration, setAcceleration] = useState(0.03);
   const baseMaxSpeed = 2;
-  const [maxSpeed, setMaxSpeed] = useState(2);
+  const [maxSpeed, setMaxSpeed] = useState(baseMaxSpeed);
   const baseRefreshRate = 5;
   const [refreshRate, setRefreshRate] = useState(5);
+  const keaAmount = 0;
+  const powerupLocations = [
+    [100, 100],
+    [600, 100],
+    [100, 600],
+    [600, 600],
+    [340, 300],
+  ];
+  const [mansoorProxity, setMansoorProxity] = useState(0);
   const playerRef = useRef<HTMLDivElement | null>(null);
+  const powerupRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
   const platform3Ref = useRef<HTMLDivElement | null>(null);
@@ -49,9 +62,13 @@ export default function Play() {
   let spliffRef = useRef<HTMLDivElement | null>(null);
   const [keysdown, setKeysdown] = useState<string[]>([]);
   const mansoorRef = useRef<HTMLDivElement | null>(null);
+  const keaRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
+  const [keaPos, setKeaPos] = useState([100, 500]);
+
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [powerupActivated, setPowerupActivated] = useState(false);
 
   function getRand(): [number, number] {
     return [Math.floor(Math.random() * 100), Math.floor(Math.random() * 100)];
@@ -64,6 +81,14 @@ export default function Play() {
     getRand(),
     getRand(),
   ]);
+
+  useEffect(() => {
+    if (powerupRef.current) {
+      powerupRef.current.style.visibility = "hidden";
+    }
+  }, []);
+
+  console.log(maxSpeed);
 
   const platforms = [
     platform1Ref.current,
@@ -91,7 +116,7 @@ export default function Play() {
     []
   );
 
-  // console.log(keysdown, playerSpeed);
+  // console.log(mansoorProxity);
 
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
@@ -275,6 +300,23 @@ export default function Play() {
       // console.log(tempPlayerSpeed);
       tempPlayerSpeed[1] = Math.min(tempPlayerSpeed[1] + gravity, maxSpeed);
 
+      // kea
+      if (score >= keaAmount) {
+        setTimeout(() => {
+          const yDist = playerPos[1] - keaPos[1];
+          const xDist = playerPos[0] - keaPos[0];
+
+          if (
+            keaRef.current &&
+            mansoorRef.current &&
+            isIntersecting(keaRef.current, mansoorRef.current)
+          ) {
+            return;
+          } else {
+            setKeaPos([keaPos[0] + xDist / 50, keaPos[1] + yDist / 50]);
+          }
+        }, 20);
+      }
       if (keysdown.includes("w")) {
         tempPlayerSpeed[1] = Math.max(
           tempPlayerSpeed[1] - acceleration,
@@ -296,12 +338,19 @@ export default function Play() {
 
       setPlayerSpeed(tempPlayerSpeed);
 
+      const mansoorSpeed = score >= keaAmount ? 20 : 50;
+      const mansoorDelay = score >= keaAmount ? 20 : 10;
+
       setTimeout(() => {
         const yDist = playerPos[1] - mansoorPos[1];
         const xDist = playerPos[0] - mansoorPos[0];
 
-        setMansoorPos([mansoorPos[0] + xDist / 50, mansoorPos[1] + yDist / 50]);
-      }, 20);
+        setMansoorPos([
+          mansoorPos[0] + xDist / mansoorSpeed,
+          mansoorPos[1] + yDist / mansoorSpeed,
+        ]);
+        setMansoorProxity(Math.sqrt(xDist ** 2 + yDist ** 2));
+      }, mansoorDelay);
       if (playerRef && spliffRef && playerRef.current && spliffRef.current) {
         // console.log("hello");
         if (isIntersecting(playerRef.current, spliffRef.current)) {
@@ -314,14 +363,62 @@ export default function Play() {
           setRefreshRate(baseRefreshRate * choppiness);
           setGravity(baseGravity * choppiness);
           setMaxSpeed(baseMaxSpeed * choppiness);
+
+          // powerup? random chance of 25%
+          if (powerupRef.current) {
+            if (Math.random() < 0.25) {
+              powerupRef.current.style.visibility = "visible";
+              // set top and left to a random value from poweruplocations
+              const randomLocation =
+                powerupLocations[
+                  Math.floor(Math.random() * powerupLocations.length)
+                ];
+
+              powerupRef.current.style.top = `${randomLocation[0]}px`;
+
+              powerupRef.current.style.left = `${randomLocation[1]}px`;
+
+              // set powerup to be visible
+              powerupRef.current.style.display = "block";
+            } else {
+              powerupRef.current.style.display = "none";
+            }
+          }
+        }
+
+        if (
+          playerRef &&
+          playerRef.current &&
+          powerupRef &&
+          powerupRef.current
+        ) {
+          if (isIntersecting(playerRef.current, powerupRef.current)) {
+            powerupRef.current.style.display = "none";
+            setMaxSpeed(baseMaxSpeed / 5);
+            setPowerupActivated(true);
+            setTimeout(() => {
+              setMaxSpeed(baseMaxSpeed);
+              setPowerupActivated(false);
+            }, 3000);
+          }
         }
       }
     }, refreshRate);
     return () => clearInterval(gameloop);
   });
 
+  function shakeAmount() {
+    if (mansoorProxity > 200) return "hide";
+
+    if (mansoorProxity < 50) return "a";
+
+    if (mansoorProxity < 100) return "b";
+
+    return "";
+  }
+
   return (
-    <main className={playstyles.main}>
+    <main className={playstyles.main + " "}>
       {gameOver ? (
         <section>
           <p>Game Over</p>
@@ -331,16 +428,21 @@ export default function Play() {
         <>
           <div
             style={{
+              background: powerupActivated
+                ? "linear-gradient(rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%) 0 0/100% 200%"
+                : "",
               backgroundColor: "red",
+              animation: "lsd 2s linear infinite",
               width: "100vh",
               height: "100vh",
-              filter: `opacity(${Math.min(score, 90)}%)`,
+              filter: `opacity(${
+                powerupActivated ? 90 : Math.min(score * 5, 90)
+              }%)`,
               position: "absolute",
               top: 0,
               left: 0,
               zIndex: 100,
             }}
-            className={playstyles.m}
           />
           <div>
             <Platform
@@ -470,6 +572,7 @@ export default function Play() {
             />
 
             <Spliff bottom={34} right={34} t={spliffRef} />
+            <Vape top={12} left={12} t={powerupRef} />
 
             <div
               style={{
@@ -487,6 +590,21 @@ export default function Play() {
 
             <div
               style={{
+                backgroundImage: "url(" + exclaImage.src + ")",
+                backgroundSize: "cover",
+                width: "1em",
+                height: "1em",
+                bottom: "2px",
+                right: "2px",
+                position: "absolute",
+                top: mansoorPos[1] - 20,
+                left: mansoorPos[0] + 10,
+                animationIterationCount: "infinite",
+              }}
+              className={shakeAmount()}
+            />
+            <div
+              style={{
                 backgroundImage: "url(" + manserImage.src + ")",
                 backgroundSize: "cover",
                 width: "2em",
@@ -499,6 +617,22 @@ export default function Play() {
               }}
               ref={mansoorRef}
             />
+            {score >= keaAmount && (
+              <div
+                style={{
+                  backgroundImage: "url(" + keaImage.src + ")",
+                  backgroundSize: "cover",
+                  width: "2em",
+                  height: "2em",
+                  bottom: "3px",
+                  right: "3px",
+                  position: "absolute",
+                  top: keaPos[1],
+                  left: keaPos[0],
+                }}
+                ref={keaRef}
+              />
+            )}
           </div>
           <h1>{score}</h1>
         </>
