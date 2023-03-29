@@ -12,7 +12,7 @@ export default function Index() {
   }, []);
 
   return (
-    <div>
+    <div style={{ padding: "2em" }}>
       <Head>
         <title>Crosby WEED</title>
       </Head>
