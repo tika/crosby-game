@@ -13,6 +13,7 @@ import keaImage from "../public/assets/kea.png";
 import { Vodka } from "../components/vodka";
 import Image from "next/image";
 import Link from "next/link";
+import { readHighscore, writeHighscore } from "../lib/utils";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 
@@ -180,26 +181,22 @@ export default function Play() {
       let newPlayerSpeed = playerSpeed;
 
       if (key === "w") {
-        // setPlayerSpeed([playerSpeed[0], playerSpeed[1] - acceleration]);
         newPlayerSpeed[1] = newPlayerSpeed[1] - acceleration;
         addKey("w");
       }
 
       if (key === "a") {
-        // setPlayerSpeed([playerSpeed[0] - acceleration, playerSpeed[1]]);
         newPlayerSpeed[0] = newPlayerSpeed[0] - acceleration;
         addKey("a");
         setDirection("left");
       }
 
       if (key === "s") {
-        // setPlayerSpeed([playerSpeed[0], playerSpeed[1] + acceleration]);
         newPlayerSpeed[1] = newPlayerSpeed[1] + acceleration;
         addKey("s");
       }
 
       if (key === "d") {
-        // setPlayerSpeed([playerSpeed[0] + acceleration, playerSpeed[1]]);
         newPlayerSpeed[0] = newPlayerSpeed[0] + acceleration;
         addKey("d");
         setDirection("right");
@@ -488,6 +485,10 @@ export default function Play() {
         if (isIntersecting(playerRef.current, keaRef.current)) {
           setGameOver("kea");
         }
+
+        if (readHighscore() < score) {
+          writeHighscore(score);
+        }
       }
     }, refreshRate);
     return () => clearInterval(gameloop);
@@ -515,6 +516,11 @@ export default function Play() {
           <p>
             {gameOver === "m" && "Mansergh"} {gameOver === "kea" && "Arnold"}{" "}
             caught you
+          </p>
+          <p>
+            {readHighscore() === score
+              ? "NEW HIGHSCORE: " + score + " spliffs!"
+              : "Highscore: " + readHighscore() + " spliffs"}
           </p>
           <Link href="javascript:history.go(0)">Refresh</Link>
         </section>
@@ -733,7 +739,10 @@ export default function Play() {
               />
             )}
           </div>
-          <h1>{score}</h1>
+          <section style={{ marginLeft: "1em" }}>
+            <h2>{score}</h2>
+            <p>{powerupActivated && powerupActivated + " ACTIVATED"}</p>
+          </section>
         </>
       )}
     </main>

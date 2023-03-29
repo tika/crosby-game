@@ -1,9 +1,15 @@
-import data from "../../data.json";
-
 export function writeHighscore(hs: number) {
-  data.highscore = hs;
+  // set in localstorage
+  localStorage.setItem("highscore", hs.toString());
 }
 
 export function readHighscore(): number {
-  return data.highscore;
+  //get from localstorage
+  const hs = localStorage.getItem("highscore");
+
+  if (hs) {
+    return parseInt(hs);
+  }
+
+  return 0;
 }
