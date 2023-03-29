@@ -1,4 +1,4 @@
-import { createRef, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "../components/platform";
 import playstyles from "../styles/play.module.css";
 import playerImage from "../public/assets/paul.png";
@@ -7,8 +7,12 @@ import crosby from "../public/assets/crosby.png";
 import { Spliff } from "../components/spliff";
 import { isIntersecting } from "../lib/intersection";
 import { Vape } from "../components/vape";
+import { Spices } from "../components/spices";
 import exclaImage from "../public/assets/excla.png";
 import keaImage from "../public/assets/kea.png";
+import { Vodka } from "../components/vodka";
+import Image from "next/image";
+import Link from "next/link";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 
@@ -22,7 +26,7 @@ export default function Play() {
   const baseMaxSpeed = 2;
   const [maxSpeed, setMaxSpeed] = useState(baseMaxSpeed);
   const baseRefreshRate = 5;
-  const [refreshRate, setRefreshRate] = useState(5);
+  const [refreshRate, setRefreshRate] = useState(baseRefreshRate);
   const keaAmount = 0;
   const powerupLocations = [
     [100, 100],
@@ -32,8 +36,9 @@ export default function Play() {
     [340, 300],
   ];
   const [mansoorProxity, setMansoorProxity] = useState(0);
+  const [slowTeacher, setSlowTeacher] = useState<number>(0);
   const playerRef = useRef<HTMLDivElement | null>(null);
-  const powerupRef = useRef<HTMLDivElement | null>(null);
+  const vapeRef = useRef<HTMLDivElement | null>(null);
   const platform1Ref = useRef<HTMLDivElement | null>(null);
   const platform2Ref = useRef<HTMLDivElement | null>(null);
   const platform3Ref = useRef<HTMLDivElement | null>(null);
@@ -60,15 +65,20 @@ export default function Play() {
   const [direction, setDirection] = useState<"right" | "left">("right");
 
   let spliffRef = useRef<HTMLDivElement | null>(null);
+  let vodkaRef = useRef<HTMLDivElement | null>(null);
+
   const [keysdown, setKeysdown] = useState<string[]>([]);
   const mansoorRef = useRef<HTMLDivElement | null>(null);
   const keaRef = useRef<HTMLDivElement | null>(null);
+  const spicesRef = useRef<HTMLDivElement | null>(null);
   const [mansoorPos, setMansoorPos] = useState([400, 500]);
   const [keaPos, setKeaPos] = useState([100, 500]);
 
   const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [powerupActivated, setPowerupActivated] = useState(false);
+  const [gameOver, setGameOver] = useState<"m" | "kea" | false>(false);
+  const [powerupActivated, setPowerupActivated] = useState<
+    "vodka" | "vape" | "spices" | null
+  >(null);
 
   function getRand(): [number, number] {
     return [Math.floor(Math.random() * 100), Math.floor(Math.random() * 100)];
@@ -82,13 +92,23 @@ export default function Play() {
     getRand(),
   ]);
 
+  function isIntersectingWithPlatform(obj: HTMLDivElement) {
+    platforms.forEach((platform) => {
+      if (platform && isIntersecting(obj, platform)) {
+        return true;
+      }
+    });
+
+    return false;
+  }
+
   useEffect(() => {
-    if (powerupRef.current) {
-      powerupRef.current.style.visibility = "hidden";
+    if (vapeRef.current && vodkaRef.current && spicesRef.current) {
+      vapeRef.current.style.display = "none";
+      vodkaRef.current.style.display = "none";
+      spicesRef.current.style.display = "none";
     }
   }, []);
-
-  console.log(maxSpeed);
 
   const platforms = [
     platform1Ref.current,
@@ -115,8 +135,6 @@ export default function Play() {
   const [previousConditions, setPreviousConditions] = useState<Conditions[]>(
     []
   );
-
-  // console.log(mansoorProxity);
 
   useEffect(() => {
     const r = (event: KeyboardEvent) => {
@@ -290,14 +308,14 @@ export default function Play() {
       ];
 
       const placement = getValidPlacement(newPosition as [number, number]);
-      // console.log(placement);
+
       const tempPlayerSpeed = playerSpeed;
       if (placement) {
         setPlayerPos(newPosition);
       } else {
         tempPlayerSpeed[1] = -gravity;
       }
-      // console.log(tempPlayerSpeed);
+
       tempPlayerSpeed[1] = Math.min(tempPlayerSpeed[1] + gravity, maxSpeed);
 
       // kea
@@ -315,7 +333,7 @@ export default function Play() {
           } else {
             setKeaPos([keaPos[0] + xDist / 50, keaPos[1] + yDist / 50]);
           }
-        }, 20);
+        }, 20 * (1 + slowTeacher / 100));
       }
       if (keysdown.includes("w")) {
         tempPlayerSpeed[1] = Math.max(
@@ -350,38 +368,63 @@ export default function Play() {
           mansoorPos[1] + yDist / mansoorSpeed,
         ]);
         setMansoorProxity(Math.sqrt(xDist ** 2 + yDist ** 2));
-      }, mansoorDelay);
+      }, mansoorDelay * (1 + slowTeacher / 100));
+
       if (playerRef && spliffRef && playerRef.current && spliffRef.current) {
-        // console.log("hello");
         if (isIntersecting(playerRef.current, spliffRef.current)) {
-          // get random number between 0 and 200
-          spliffRef.current.style.top = `${Math.floor(Math.random() * 100)}vh`;
-          spliffRef.current.style.left = `${Math.floor(Math.random() * 100)}vh`;
+          const x = Math.floor(Math.random() * 100);
+          const y = Math.floor(Math.random() * 100);
+
+          spliffRef.current.style.top = `${x}vh`;
+          spliffRef.current.style.left = `${y}vh`;
+
+          while (isIntersectingWithPlatform(spliffRef.current)) {
+            const x = Math.floor(Math.random() * 100);
+            const y = Math.floor(Math.random() * 100);
+
+            spliffRef.current.style.top = `${x}vh`;
+            spliffRef.current.style.left = `${y}vh`;
+          }
+
           setScore(score + 1);
-          const choppiness = score * 0.2 + 1;
+          const choppiness = 1;
           setAcceleration(baseAcceleration * choppiness);
           setRefreshRate(baseRefreshRate * choppiness);
           setGravity(baseGravity * choppiness);
           setMaxSpeed(baseMaxSpeed * choppiness);
 
           // powerup? random chance of 25%
-          if (powerupRef.current) {
-            if (Math.random() < 0.25) {
-              powerupRef.current.style.visibility = "visible";
-              // set top and left to a random value from poweruplocations
-              const randomLocation =
-                powerupLocations[
-                  Math.floor(Math.random() * powerupLocations.length)
-                ];
+          if (
+            vapeRef.current &&
+            vodkaRef.current &&
+            spicesRef.current &&
+            Math.random() < 0.25
+          ) {
+            const powerups = ["vodka", "vape", "spices"];
 
-              powerupRef.current.style.top = `${randomLocation[0]}px`;
+            const randomPowerup =
+              powerups[Math.floor(Math.random() * powerups.length)];
 
-              powerupRef.current.style.left = `${randomLocation[1]}px`;
+            const randomLocation =
+              powerupLocations[
+                Math.floor(Math.random() * powerupLocations.length)
+              ];
 
-              // set powerup to be visible
-              powerupRef.current.style.display = "block";
+            if (randomPowerup === "vodka") {
+              vodkaRef.current.style.top = `${randomLocation[0]}px`;
+              vodkaRef.current.style.left = `${randomLocation[1]}px`;
+              vodkaRef.current.style.display = "block";
+            } else if (randomPowerup === "vape") {
+              vapeRef.current.style.top = `${randomLocation[0]}px`;
+              vapeRef.current.style.left = `${randomLocation[1]}px`;
+              vapeRef.current.style.display = "block";
+            } else if (randomPowerup === "spices") {
+              vapeRef.current.style.top = `${randomLocation[0]}px`;
+              vapeRef.current.style.left = `${randomLocation[1]}px`;
+              vapeRef.current.style.display = "block";
             } else {
-              powerupRef.current.style.display = "none";
+              vapeRef.current.style.display = "none";
+              vodkaRef.current.style.display = "none";
             }
           }
         }
@@ -389,18 +432,61 @@ export default function Play() {
         if (
           playerRef &&
           playerRef.current &&
-          powerupRef &&
-          powerupRef.current
+          vapeRef &&
+          vapeRef.current &&
+          vodkaRef &&
+          vodkaRef.current &&
+          spicesRef.current &&
+          spicesRef &&
+          !powerupActivated
         ) {
-          if (isIntersecting(playerRef.current, powerupRef.current)) {
-            powerupRef.current.style.display = "none";
+          if (isIntersecting(playerRef.current, vapeRef.current)) {
+            vapeRef.current.style.display = "none";
             setMaxSpeed(baseMaxSpeed / 5);
-            setPowerupActivated(true);
+            setPowerupActivated("vape");
+            setSlowTeacher(50);
+
             setTimeout(() => {
               setMaxSpeed(baseMaxSpeed);
-              setPowerupActivated(false);
+              setPowerupActivated(null);
+              setSlowTeacher(0);
             }, 3000);
           }
+
+          if (isIntersecting(playerRef.current, vodkaRef.current)) {
+            vodkaRef.current.style.display = "none";
+            setPowerupActivated("vodka");
+            setTimeout(() => {
+              setPowerupActivated(null);
+            }, 10000);
+          }
+
+          if (isIntersecting(playerRef.current, spicesRef.current)) {
+            spicesRef.current.style.display = "none";
+            setPowerupActivated("spices");
+            setRefreshRate(baseRefreshRate / 3);
+            setTimeout(() => {
+              setPowerupActivated(null);
+              setRefreshRate(baseRefreshRate);
+            }, 5000);
+          }
+        }
+      }
+
+      if (
+        playerRef &&
+        mansoorRef &&
+        keaRef &&
+        playerRef.current &&
+        mansoorRef.current &&
+        keaRef.current
+      ) {
+        if (isIntersecting(playerRef.current, mansoorRef.current)) {
+          setGameOver("m");
+        }
+
+        if (isIntersecting(playerRef.current, keaRef.current)) {
+          setGameOver("kea");
         }
       }
     }, refreshRate);
@@ -420,23 +506,29 @@ export default function Play() {
   return (
     <main className={playstyles.main + " "}>
       {gameOver ? (
-        <section>
-          <p>Game Over</p>
-          <p>You smoked {score} zoots</p>
+        <section style={{ marginLeft: "5em" }}>
+          <Image src={crosby.src} alt="Crosby" width={300} height={300}></Image>
+          <h1>Game Over</h1>
+          <p>
+            You smoked <i>{score}</i> zoots
+          </p>
+          <p>
+            {gameOver === "m" && "Mansergh"} {gameOver === "kea" && "Arnold"}{" "}
+            caught you
+          </p>
+          <Link href="javascript:history.go(0)">Refresh</Link>
         </section>
       ) : (
         <>
           <div
+            className={powerupActivated === "vape" ? "lsdbg" : ""}
             style={{
-              background: powerupActivated
-                ? "linear-gradient(rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%) 0 0/100% 200%"
-                : "",
               backgroundColor: "red",
               animation: "lsd 2s linear infinite",
               width: "100vh",
               height: "100vh",
               filter: `opacity(${
-                powerupActivated ? 90 : Math.min(score * 5, 90)
+                powerupActivated === "vape" ? 90 : Math.min(score * 5, 90)
               }%)`,
               position: "absolute",
               top: 0,
@@ -572,7 +664,9 @@ export default function Play() {
             />
 
             <Spliff bottom={34} right={34} t={spliffRef} />
-            <Vape top={12} left={12} t={powerupRef} />
+            <Vape top={12} left={12} t={vapeRef} />
+            <Vodka top={12} left={12} t={vodkaRef} />
+            <Spices top={12} left={12} t={spicesRef} />
 
             <div
               style={{
@@ -583,7 +677,12 @@ export default function Play() {
                 position: "absolute",
                 top: playerPos[1],
                 left: playerPos[0],
-                transform: `scaleX(${direction === "right" ? -1 : 1})`,
+                transform:
+                  powerupActivated !== "vodka"
+                    ? `scaleX(${direction === "right" ? -1 : 1})`
+                    : "",
+                animation:
+                  powerupActivated !== "vodka" ? "" : "spin 0.5s infinite",
               }}
               ref={playerRef}
             />

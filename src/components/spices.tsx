@@ -1,7 +1,7 @@
 import { MutableRefObject } from "react";
-import vapeImage from "../public/assets/smok.png";
+import spicesImage from "../public/assets/smok.png";
 
-export function Vape(props: {
+export function Spices(props: {
   top: number;
   left: number;
   t?: MutableRefObject<HTMLDivElement | null>;
@@ -9,7 +9,7 @@ export function Vape(props: {
   return (
     <div
       style={{
-        backgroundImage: "url(" + vapeImage.src + ")",
+        backgroundImage: "url(" + spicesImage.src + ")",
         backgroundSize: "cover",
         width: "2.5em",
         height: "2.5em",
