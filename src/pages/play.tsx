@@ -29,6 +29,7 @@ export default function Play() {
   const [maxSpeed, setMaxSpeed] = useState(baseMaxSpeed);
   const baseRefreshRate = 5;
   const [refreshRate, setRefreshRate] = useState(baseRefreshRate);
+  const [gameWon, setGameWon] = useState(false);
   const keaAmount = 0;
   const powerupLocations = [
     [100, 100],
@@ -484,7 +485,7 @@ export default function Play() {
         }
 
         if (isIntersecting(playerRef.current, keaRef.current)) {
-          setGameOver("kea");
+          setGameWon(true);
         }
 
         if (readHighscore() < score) {
@@ -510,7 +511,21 @@ export default function Play() {
       <Head>
         <title>Crosby WEED</title>
       </Head>
-      {gameOver ? (
+      {gameWon ? (
+        <section>
+          <h1>You won</h1>
+          <h3 style={{ color: "green" }}>
+            Arnold was <i>lenient</i> with you
+          </h3>
+          <p>btw. 7 A*s out of 9 - the other two just wouldn&apos;t listen</p>
+          <hr />
+          <p>
+            {readHighscore() === score
+              ? "NEW HIGHSCORE: " + score + " spliffs!"
+              : "Highscore: " + readHighscore() + " spliffs"}
+          </p>
+        </section>
+      ) : gameOver ? (
         <section style={{ marginLeft: "5em" }}>
           <Image
             src={crosby.src}
@@ -524,9 +539,10 @@ export default function Play() {
             You smoked <i>{score}</i> zoots
           </p>
           <p>
-            {gameOver === "m" && "Mansergh"} {gameOver === "kea" && "Arnold"}{" "}
+            {gameOver === "m" && "Mansergh "}
             caught you
           </p>
+          <hr />
           <p>
             {readHighscore() === score
               ? "NEW HIGHSCORE: " + score + " spliffs!"
