@@ -3,8 +3,10 @@ import { MutableRefObject } from "react";
 export function Platform(props: {
   height: string;
   width: string;
-  bottom: string;
-  right: string;
+  bottom?: string;
+  right?: string;
+  left?: string;
+  top?: string;
   vertical?: boolean;
   t: MutableRefObject<HTMLDivElement | null>;
 }) {

@@ -14,6 +14,7 @@ import { Vodka } from "../components/vodka";
 import Image from "next/image";
 import Link from "next/link";
 import { readHighscore, writeHighscore } from "../lib/utils";
+import Head from "next/head";
 
 type Conditions = [boolean, boolean, boolean, boolean];
 
@@ -506,9 +507,18 @@ export default function Play() {
 
   return (
     <main className={playstyles.main + " "}>
+      <Head>
+        <title>Crosby WEED</title>
+      </Head>
       {gameOver ? (
         <section style={{ marginLeft: "5em" }}>
-          <Image src={crosby.src} alt="Crosby" width={300} height={300}></Image>
+          <Image
+            src={crosby.src}
+            alt="Crosby"
+            priority
+            width={300}
+            height={300}
+          ></Image>
           <h1>Game Over</h1>
           <p>
             You smoked <i>{score}</i> zoots
@@ -522,7 +532,7 @@ export default function Play() {
               ? "NEW HIGHSCORE: " + score + " spliffs!"
               : "Highscore: " + readHighscore() + " spliffs"}
           </p>
-          <Link href="javascript:history.go(0)">Refresh</Link>
+          <Link href="/">Refresh</Link>
         </section>
       ) : (
         <>
@@ -561,46 +571,46 @@ export default function Play() {
               t={platform3Ref}
               width={"10px"}
               bottom={"0"}
-              right={"calc(100vh - 10px)"}
+              top={"0"}
               height={"100vh"}
             />
             <Platform
               t={platform4Ref}
               width={"100vh"}
-              bottom={"calc(100vh - 10px)"}
+              top={"0"}
               right={"0px"}
               height={"10px"}
             />
 
             <Platform
               t={platform5Ref}
-              width={"calc(100vh - 20px - 2*4em)"}
+              width={"80vh"}
               bottom={"4em"}
-              right={"calc(10px + 4em)"}
+              right={"4.5em"}
               height={"10px"}
             />
 
             <Platform
               t={platform6Ref}
-              width={"calc(100vh - 20px - 2*4em)"}
-              bottom={"calc(100vh - 10px - 4em)"}
-              right={"calc(10px + 4em)"}
+              width={"80vh"}
+              top={"4.5em"}
+              right={"4.5em"}
               height={"10px"}
             />
 
             <Platform
               t={platform7Ref}
               width={"10px"}
-              bottom={"calc(100vh - 10px - 4em)"}
-              right={"calc(10px + 4em)"}
+              top={"4.5em"}
+              right={"4.5em"}
               height={"30px"}
             />
 
             <Platform
               t={platform8Ref}
               width={"10px"}
-              bottom={"calc(10px + 4em)"}
-              right={"calc((100vh - 20px)/2)"}
+              bottom={"4.5"}
+              right={"50%"}
               height={"100px"}
             />
 
@@ -643,29 +653,29 @@ export default function Play() {
             <Platform
               t={platform14Ref}
               width={"200px"}
-              bottom={`calc(100vh/2 - 50px)`}
-              right={`calc(100vh/2 - 100px)`}
+              bottom={`50%`}
+              right={`50%`}
               height={"10px"}
             />
             <Platform
               t={platform15Ref}
               width={"10px"}
-              bottom={`calc(100vh/2 - 50px)`}
-              right={`calc(100vh/2 - 100px)`}
+              bottom={`50%`}
+              right={`50%`}
               height={"150px"}
             />
             <Platform
               t={platform16Ref}
               width={"200px"}
-              bottom={`calc(100vh/2 + 100px)`}
-              right={`calc(100vh/2 - 100px)`}
+              bottom={`60%`}
+              right={`60%`}
               height={"10px"}
             />
             <Platform
               t={platform17Ref}
               width={"10px"}
-              bottom={`calc(100vh/2 - 50px)`}
-              right={`calc(100vh/2 + 100px)`}
+              bottom={`50%`}
+              right={`60%`}
               height={"80px"}
             />
 

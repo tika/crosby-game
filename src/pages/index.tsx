@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { readHighscore } from "../lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Head from "next/head";
 
 export default function Index() {
   const [highscore, setHighscore] = useState(0);
@@ -12,6 +13,9 @@ export default function Index() {
 
   return (
     <div>
+      <Head>
+        <title>Crosby WEED</title>
+      </Head>
       <h1>Crosby Weed Smoking Game</h1>
       <h2>
         Smoke as many J&apos;s as possible without{" "}
